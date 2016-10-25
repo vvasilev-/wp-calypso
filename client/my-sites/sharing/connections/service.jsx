@@ -3,7 +3,7 @@
  */
 import React, { PropTypes } from 'react';
 import { connect } from 'react-redux';
-import { identity, replace } from 'lodash';
+import { identity, replace, some } from 'lodash';
 import { localize } from 'i18n-calypso';
 import SocialLogo from 'social-logos';
 
@@ -12,6 +12,7 @@ import SocialLogo from 'social-logos';
  */
 import AccountDialog from './account-dialog';
 import FoldableCard from 'components/foldable-card';
+import { getConnectionsBySiteId, isFetchingConnections } from 'state/sharing/publicize/selectors';
 import { getSelectedSiteId } from 'state/ui/selectors';
 import notices from 'notices';
 import observe from 'lib/mixins/data-observe';
@@ -223,6 +224,33 @@ const SharingService = React.createClass( {
 		}
 	},
 
+	/**
+	 * Given a service name and optional site ID, returns the current status of the
+	 * service's connection.
+	 *
+	 * @param {string} service The name of the service to check
+	 * @return {string} Connection status.
+	 */
+	getConnectionStatus: function( service ) {
+		let status;
+
+		if ( this.props.isFetching ) {
+			// When connections are still loading, we don't know the status
+			status = 'unknown';
+		} else if ( ! some( this.props.siteConnections, { service } ) ) {
+			// If no connections exist, the service isn't connected
+			status = 'not-connected';
+		} else if ( some( this.props.siteConnections, { status: 'broken', keyring_connection_user_ID: this.props.user.ID } ) ) {
+			// A problematic connection exists
+			status = 'reconnect';
+		} else {
+			// If all else passes, assume service is connected
+			status = 'connected';
+		}
+
+		return status;
+	},
+
 	render: function() {
 		const connectionStatus = serviceConnections.getConnectionStatus( this.props.service.ID ),
 			connections = serviceConnections.getConnections( this.props.service.ID );
@@ -301,10 +329,16 @@ const SharingService = React.createClass( {
 } );
 
 export default connect(
-	( state ) => ( {
-		siteId: getSelectedSiteId( state ),
-	} ),
+	( state ) => {
+		const siteId = getSelectedSiteId( state );
+
+		return {
+			isFetching: isFetchingConnections( state, siteId ),
+			siteConnections: getConnectionsBySiteId( state, siteId ),
+			siteId,
+		};
+	},
 	{
 		recordGoogleEvent,
-	},
+	}
 )( localize( SharingService ) );
