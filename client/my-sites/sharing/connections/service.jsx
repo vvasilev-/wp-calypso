@@ -19,9 +19,10 @@ import {
 } from 'state/sharing/publicize/actions';
 import FoldableCard from 'components/foldable-card';
 import { getConnectionsBySiteId, isFetchingConnections } from 'state/sharing/publicize/selectors';
-import { getSelectedSiteId } from 'state/ui/selectors';
 import notices from 'notices';
 import observe from 'lib/mixins/data-observe';
+import { getCurrentUserId } from 'state/current-user/selectors';
+import { getSelectedSiteId } from 'state/ui/selectors';
 import PopupMonitor from 'lib/popup-monitor';
 import { recordGoogleEvent } from 'state/analytics/actions';
 import ServiceAction from './service-action';
@@ -36,10 +37,19 @@ const SharingService = React.createClass( {
 	displayName: 'SharingService',
 
 	propTypes: {
-		connections: PropTypes.object.isRequired,   // A collections-list instance
-		service: PropTypes.object.isRequired,       // The single service object
-		siteId: PropTypes.number,                   // The site ID for which connections are created
+		connections: PropTypes.object.isRequired, // A collections-list instance
+		createSiteConnection: PropTypes.func,
+		deleteSiteConnection: PropTypes.func,
+		fetchConnections: PropTypes.func,
+		isFetching: PropTypes.bool,
+		recordGoogleEvent: PropTypes.func,
+		service: PropTypes.object.isRequired,     // The single service object
+		siteConnections: PropTypes.arrayOf( PropTypes.object ),
+		siteId: PropTypes.number,                 // The site ID for which connections are created
 		translate: PropTypes.func,
+		updateSiteConnection: PropTypes.func,
+		userId: PropTypes.number,                 // ID of the current user
+		warningNotice: PropTypes.func,
 	},
 
 	mixins: [ observe( 'connections' ) ],
@@ -56,8 +66,17 @@ const SharingService = React.createClass( {
 
 	getDefaultProps: function() {
 		return {
+			createSiteConnection: () => {},
+			deleteSiteConnection: () => {},
+			fetchConnections: () => {},
+			isFetching: false,
+			recordGoogleEvent: () => {},
+			siteConnections: Object.freeze( [] ),
 			siteId: 0,
 			translate: identity,
+			updateSiteConnection: () => {},
+			userId: 0,
+			warningNotice: () => {},
 		};
 	},
 
@@ -277,7 +296,7 @@ const SharingService = React.createClass( {
 		} else if ( ! some( this.props.siteConnections, { service } ) ) {
 			// If no connections exist, the service isn't connected
 			status = 'not-connected';
-		} else if ( some( this.props.siteConnections, { status: 'broken', keyring_connection_user_ID: this.props.user.ID } ) ) {
+		} else if ( some( this.props.siteConnections, { status: 'broken', keyring_connection_user_ID: this.props.userId } ) ) {
 			// A problematic connection exists
 			status = 'reconnect';
 		} else {
@@ -373,6 +392,7 @@ export default connect(
 			isFetching: isFetchingConnections( state, siteId ),
 			siteConnections: getConnectionsBySiteId( state, siteId ),
 			siteId,
+			userId: getCurrentUserId( state ),
 		};
 	},
 	{
