@@ -228,9 +228,9 @@ const SharingService = React.createClass( {
 			if ( keyringConnectionId ) {
 				// Since we have a Keyring connection to work with, we can immediately
 				// create or update the connection
-				const keyringConnections = filter( this.props.fetchConnections( this.props.siteId ), { keyringConnectionId } );
+				const keyringConnections = filter( this.props.keyringConnections, { ID: keyringConnectionId } );
 
-				if ( this.props.siteId && keyringConnections.length ) {
+				if ( this.props.siteId && externalUserId && keyringConnections.length ) {
 					// If a Keyring connection is already in use by another connection,
 					// we should trigger an update. There should only be one connection,
 					// so we're correct in using the connection ID from the first
