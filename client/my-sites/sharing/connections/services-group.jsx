@@ -23,7 +23,6 @@ const NUMBER_OF_PLACEHOLDERS = 4;
 class SharingServicesGroup extends Component {
 	static propTypes = {
 		connections: PropTypes.object,
-		description: PropTypes.string,
 		services: PropTypes.array,
 		title: PropTypes.string.isRequired,
 		type: PropTypes.string.isRequired,
@@ -31,7 +30,6 @@ class SharingServicesGroup extends Component {
 
 	static defaultProps = {
 		connections: Object.freeze( {} ),
-		description: '',
 		services: Object.freeze( [] ),
 	};
 
