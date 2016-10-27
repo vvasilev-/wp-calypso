@@ -17,11 +17,12 @@ import {
 	fetchConnections,
 	updateSiteConnection,
 } from 'state/sharing/publicize/actions';
+import { errorNotice, successNotice, warningNotice } from 'state/notices/actions';
 import FoldableCard from 'components/foldable-card';
+import { getCurrentUser, getCurrentUserId } from 'state/current-user/selectors';
 import { getKeyringConnectionsByName } from 'state/sharing/keyring/selectors';
-import { getSiteUserConnections, isFetchingConnections } from 'state/sharing/publicize/selectors';
-import { getCurrentUserId } from 'state/current-user/selectors';
 import { getSelectedSite, getSelectedSiteId } from 'state/ui/selectors';
+import { getSiteUserConnections, isFetchingConnections } from 'state/sharing/publicize/selectors';
 import observe from 'lib/mixins/data-observe';
 import PopupMonitor from 'lib/popup-monitor';
 import { recordGoogleEvent } from 'state/analytics/actions';
@@ -31,7 +32,6 @@ import ServiceConnectedAccounts from './service-connected-accounts';
 import ServiceDescription from './service-description';
 import ServiceExamples from './service-examples';
 import ServiceTip from './service-tip';
-import { errorNotice, successNotice, warningNotice } from 'state/notices/actions';
 
 const SharingService = React.createClass( {
 	displayName: 'SharingService',
@@ -211,6 +211,16 @@ const SharingService = React.createClass( {
 			isRefreshing: false,    // A pending refresh is awaiting completion
 			isSelectingAccount: false,
 		};
+	},
+
+	componentWillReceiveProps: function( nextProps ) {
+		if ( this.props.siteUserConnections.length !== nextProps.siteUserConnections.length ) {
+			this.setState( {
+				isConnecting: false,
+				isDisconnecting: false,
+				isSelectingAccount: false,
+			} );
+		}
 	},
 
 	componentWillUnmount: function() {
