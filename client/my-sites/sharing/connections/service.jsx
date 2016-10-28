@@ -62,6 +62,16 @@ const SharingService = React.createClass( {
 
 	mixins: [ observe( 'connections' ) ],
 
+	getInitialState: function() {
+		return {
+			isOpen: false,          // The service is visually opened
+			isConnecting: false,    // A pending connection is awaiting authorization
+			isDisconnecting: false, // A pending disconnection is awaiting completion
+			isRefreshing: false,    // A pending refresh is awaiting completion
+			isSelectingAccount: false,
+		};
+	},
+
 	getDefaultProps: function() {
 		return {
 			availableExternalAccounts: Object.freeze( [] ),
@@ -82,6 +92,77 @@ const SharingService = React.createClass( {
 			userId: 0,
 			warningNotice: () => {},
 		};
+	},
+
+	componentWillReceiveProps: function( nextProps ) {
+		if ( this.getConnections().length !== nextProps.siteUserConnections.length ) {
+			this.setState( {
+				isConnecting: false,
+				isDisconnecting: false,
+				isSelectingAccount: false,
+			} );
+		}
+	},
+
+	componentWillUnmount: function() {
+		this.props.connections.off( 'refresh:success', this.onRefreshSuccess );
+		this.props.connections.off( 'refresh:error', this.onRefreshError );
+	},
+
+	addConnection: function( service, keyringConnectionId, externalUserId = false ) {
+		this.setState( { isConnecting: true } );
+
+		if ( service ) {
+			if ( keyringConnectionId ) {
+				// Since we have a Keyring connection to work with, we can immediately
+				// create or update the connection
+				const keyringConnections = filter( this.props.keyringConnections, { ID: keyringConnectionId } );
+
+				if ( this.props.siteId && externalUserId && keyringConnections.length ) {
+					// If a Keyring connection is already in use by another connection,
+					// we should trigger an update. There should only be one connection,
+					// so we're correct in using the connection ID from the first
+					this.props.updateSiteConnection( this.props.siteId, keyringConnections[ 0 ].ID, { external_user_ID: externalUserId } );
+				} else {
+					this.props.createSiteConnection( this.props.siteId, keyringConnectionId, externalUserId );
+				}
+
+				this.props.recordGoogleEvent( 'Sharing', 'Clicked Connect Button in Modal', this.props.service.ID );
+			} else {
+				// Attempt to create a new connection. If a Keyring connection ID
+				// is not provided, the user will need to authorize the app
+				const popupMonitor = new PopupMonitor();
+
+				popupMonitor.open( service.connect_URL, null, 'toolbar=0,location=0,status=0,menubar=0,' +
+					popupMonitor.getScreenCenterSpecs( 780, 500 ) );
+
+				popupMonitor.once( 'close', () => {
+					// When the user has finished authorizing the connection
+					// (or otherwise closed the window), force a refresh
+					this.props.fetchConnections( this.props.siteId );
+
+					// In the case that a Keyring connection doesn't exist, wait for app
+					// authorization to occur, then display with the available connections
+					if ( this.didKeyringConnectionSucceed( service.ID, this.props.siteId ) && 'publicize' === service.type ) {
+						this.setState( { isSelectingAccount: true } );
+					}
+				} );
+			}
+		} else {
+			// If an account wasn't selected from the dialog or the user cancels
+			// the connection, the dialog should simply close
+			this.props.warningNotice( this.props.translate( 'The connection could not be made because no account was selected.', {
+				context: 'Sharing: Publicize connection confirmation'
+			} ) );
+			this.props.recordGoogleEvent( 'Sharing', 'Clicked Cancel Button in Modal', this.props.service.ID );
+		}
+
+		// Reset active account selection
+		this.setState( { isSelectingAccount: false } );
+	},
+
+	toggleSitewideConnection: function( connection, isSitewide ) {
+		this.props.connections.update( connection, { shared: isSitewide } );
 	},
 
 	/**
@@ -185,109 +266,6 @@ const SharingService = React.createClass( {
 		return value;
 	},
 
-	getInitialState: function() {
-		return {
-			isOpen: false,          // The service is visually opened
-			isConnecting: false,    // A pending connection is awaiting authorization
-			isDisconnecting: false, // A pending disconnection is awaiting completion
-			isRefreshing: false,    // A pending refresh is awaiting completion
-			isSelectingAccount: false,
-		};
-	},
-
-	componentWillReceiveProps: function( nextProps ) {
-		if ( this.getConnections().length !== nextProps.siteUserConnections.length ) {
-			this.setState( {
-				isConnecting: false,
-				isDisconnecting: false,
-				isSelectingAccount: false,
-			} );
-		}
-	},
-
-	componentWillUnmount: function() {
-		this.props.connections.off( 'destroy:success', this.onDisconnectionSuccess );
-		this.props.connections.off( 'destroy:error', this.onDisconnectionError );
-		this.props.connections.off( 'refresh:success', this.onRefreshSuccess );
-		this.props.connections.off( 'refresh:error', this.onRefreshError );
-	},
-
-	addConnection: function( service, keyringConnectionId, externalUserId = false ) {
-		this.setState( { isConnecting: true } );
-
-		if ( service ) {
-			if ( keyringConnectionId ) {
-				// Since we have a Keyring connection to work with, we can immediately
-				// create or update the connection
-				const keyringConnections = filter( this.props.keyringConnections, { ID: keyringConnectionId } );
-
-				if ( this.props.siteId && externalUserId && keyringConnections.length ) {
-					// If a Keyring connection is already in use by another connection,
-					// we should trigger an update. There should only be one connection,
-					// so we're correct in using the connection ID from the first
-					this.props.updateSiteConnection( this.props.siteId, keyringConnections[ 0 ].ID, { external_user_ID: externalUserId } );
-				} else {
-					this.props.createSiteConnection( this.props.siteId, keyringConnectionId, externalUserId );
-				}
-
-				this.props.recordGoogleEvent( 'Sharing', 'Clicked Connect Button in Modal', this.props.service.ID );
-			} else {
-				// Attempt to create a new connection. If a Keyring connection ID
-				// is not provided, the user will need to authorize the app
-				const popupMonitor = new PopupMonitor();
-
-				popupMonitor.open( service.connect_URL, null, 'toolbar=0,location=0,status=0,menubar=0,' +
-					popupMonitor.getScreenCenterSpecs( 780, 500 ) );
-
-				popupMonitor.once( 'close', () => {
-					// When the user has finished authorizing the connection
-					// (or otherwise closed the window), force a refresh
-					this.props.fetchConnections( this.props.siteId );
-
-					// In the case that a Keyring connection doesn't exist, wait for app
-					// authorization to occur, then display with the available connections
-					if ( this.didKeyringConnectionSucceed( service.ID, this.props.siteId ) && 'publicize' === service.type ) {
-						this.setState( { isSelectingAccount: true } );
-					}
-				} );
-			}
-		} else {
-			// If an account wasn't selected from the dialog or the user cancels
-			// the connection, the dialog should simply close
-			this.props.warningNotice( this.props.translate( 'The connection could not be made because no account was selected.', {
-				context: 'Sharing: Publicize connection confirmation'
-			} ) );
-			this.props.recordGoogleEvent( 'Sharing', 'Clicked Cancel Button in Modal', this.props.service.ID );
-		}
-
-		// Reset active account selection
-		this.setState( { isSelectingAccount: false } );
-	},
-
-	toggleSitewideConnection: function( connection, isSitewide ) {
-		this.props.connections.update( connection, { shared: isSitewide } );
-	},
-
-	onDisconnectionSuccess: function() {
-		this.setState( { isDisconnecting: false } );
-		this.props.connections.off( 'destroy:error', this.onDisconnectionError );
-
-		this.props.successNotice( this.props.translate( 'The %(service)s account was successfully disconnected.', {
-			args: { service: this.props.service.label },
-			context: 'Sharing: Publicize disconnection confirmation'
-		} ) );
-	},
-
-	onDisconnectionError: function() {
-		this.setState( { isDisconnecting: false } );
-		this.props.connections.off( 'destroy:success', this.onDisconnectionSuccess );
-
-		this.props.errorNotice( this.props.translate( 'The %(service)s account was unable to be disconnected.', {
-			args: { service: this.props.service.label },
-			context: 'Sharing: Publicize disconnection confirmation'
-		} ) );
-	},
-
 	onRefreshSuccess: function() {
 		this.setState( { isRefreshing: false } );
 		this.props.connections.off( 'refresh:error', this.onRefreshError );
@@ -308,39 +286,27 @@ const SharingService = React.createClass( {
 		} ) );
 	},
 
-	disconnect: function( connections ) {
-		if ( 'undefined' === typeof connections ) {
-			// If connections is undefined, assume that all connections for
-			// this service are to be removed.
-			connections = this.getRemovableConnections( this.props.service.ID );
-		}
-
-		this.setState( { isDisconnecting: true } );
-		this.props.connections.once( 'destroy:success', this.onDisconnectionSuccess );
-		this.props.connections.once( 'destroy:error', this.onDisconnectionError );
-		this.removeConnection( connections );
-	},
-
-	refresh: function( oldConnection ) {
+	refresh: function( connection ) {
 		this.setState( { isRefreshing: true } );
 		this.props.connections.once( 'refresh:success', this.onRefreshSuccess );
 		this.props.connections.once( 'refresh:error', this.onRefreshError );
 
-		if ( ! oldConnection ) {
+		if ( ! connection ) {
 			// When triggering a refresh from the primary action button, find
 			// the first broken connection owned by the current user.
-			oldConnection = filter( this.getConnections, { status: 'broken' } );
+			connection = filter( this.getConnections(), { status: 'broken' } );
 		}
-		this.refreshConnection( oldConnection );
+		this.refreshConnection( connection );
 	},
 
 	performAction: function() {
-		const connectionStatus = this.getConnectionStatus( this.props.service.ID );
+		const connectionStatus = this.getConnectionStatus( this.props.service.ID ),
+			removableConnections = this.getRemovableConnections( this.props.service.ID );
 
 		// Depending on current status, perform an action when user clicks the
 		// service action button
-		if ( 'connected' === connectionStatus && this.getRemovableConnections( this.props.service.ID ).length ) {
-			this.disconnect();
+		if ( 'connected' === connectionStatus && removableConnections.length ) {
+			this.removeConnection( removableConnections );
 			this.props.recordGoogleEvent( 'Sharing', 'Clicked Disconnect Button', this.props.service.ID );
 		} else if ( 'reconnect' === connectionStatus ) {
 			this.refresh();
@@ -355,10 +321,17 @@ const SharingService = React.createClass( {
 		this.props.connections.refresh( connection );
 	},
 
-	removeConnection: function( connections ) {
+	/**
+	 * Deletes the passed connections.
+	 *
+	 * @param {Array} connections Optional. Connections to be deleted.
+	 *                            Default: All connections for this service.
+	 */
+	removeConnection: function( connections = this.getRemovableConnections( this.props.service.ID ) ) {
+		this.setState( { isDisconnecting: true } );
+
 		connections = this.filterConnectionsToRemove( connections );
 		connections.map( this.props.deleteSiteConnection );
-		this.props.connections.destroy( connections );
 	},
 
 	/**
@@ -425,7 +398,7 @@ const SharingService = React.createClass( {
 					isRefreshing={ this.state.isRefreshing }
 					onAddConnection={ this.addConnection }
 					onRefreshConnection={ this.refresh }
-					onRemoveConnection={ this.disconnect }
+					onRemoveConnection={ this.removeConnection }
 					onToggleSitewideConnection={ this.toggleSitewideConnection }
 					service={ this.props.service } />
 				<ServiceTip service={ this.props.service } />
