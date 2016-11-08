@@ -2,6 +2,7 @@
  * External dependencies
  */
 import React, { Component, PropTypes } from 'react';
+import { connect } from 'react-redux';
 import { identity } from 'lodash';
 import { localize } from 'i18n-calypso';
 
@@ -9,6 +10,7 @@ import { localize } from 'i18n-calypso';
  * Internal dependencies
  */
 import Button from 'components/button';
+import { getRemovableConnections } from 'state/sharing/publicize/selectors';
 
 class SharingServiceAction extends Component {
 	static propTypes = {
@@ -17,7 +19,7 @@ class SharingServiceAction extends Component {
 		isDisconnecting: PropTypes.bool,
 		isRefreshing: PropTypes.bool,
 		onAction: PropTypes.func,
-		removableConnections: PropTypes.array,
+		removableConnections: PropTypes.arrayOf( PropTypes.object ),
 		service: PropTypes.object.isRequired,
 		status: PropTypes.string,
 		translate: PropTypes.func,
@@ -84,4 +86,8 @@ class SharingServiceAction extends Component {
 	}
 }
 
-export default localize( SharingServiceAction );
+export default connect(
+	( state, { service } ) => ( {
+		removableConnections: getRemovableConnections( state, service.ID ),
+	} ),
+)( localize( SharingServiceAction ) );

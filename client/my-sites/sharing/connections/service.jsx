@@ -23,8 +23,12 @@ import FoldableCard from 'components/foldable-card';
 import { getAvailableExternalAccounts } from 'state/sharing/selectors';
 import { getCurrentUserId } from 'state/current-user/selectors';
 import { getKeyringConnectionsByName } from 'state/sharing/keyring/selectors';
-import { getSelectedSite, getSelectedSiteId } from 'state/ui/selectors';
-import { getSiteUserConnectionsForService, isFetchingConnections } from 'state/sharing/publicize/selectors';
+import {
+	getRemovableConnections,
+	getSiteUserConnectionsForService,
+	isFetchingConnections,
+} from 'state/sharing/publicize/selectors';
+import { getSelectedSiteId } from 'state/ui/selectors';
 import observe from 'lib/mixins/data-observe';
 import PopupMonitor from 'lib/popup-monitor';
 import { recordGoogleEvent } from 'state/analytics/actions';
@@ -49,8 +53,8 @@ const SharingService = React.createClass( {
 		isFetching: PropTypes.bool,
 		keyringConnections: PropTypes.arrayOf( PropTypes.object ),
 		recordGoogleEvent: PropTypes.func,
+		removableConnections: PropTypes.arrayOf( PropTypes.object ),
 		service: PropTypes.object.isRequired,     // The single service object
-		site: PropTypes.object,
 		siteId: PropTypes.number,                 // The site ID for which connections are created
 		siteUserConnections: PropTypes.arrayOf( PropTypes.object ),
 		successNotice: PropTypes.func,
@@ -83,6 +87,7 @@ const SharingService = React.createClass( {
 			isFetching: false,
 			keyringConnections: Object.freeze( [] ),
 			recordGoogleEvent: () => {},
+			removableConnections: Object.freeze( [] ),
 			site: Object.freeze( {} ),
 			siteId: 0,
 			siteUserConnections: Object.freeze( [] ),
@@ -172,21 +177,6 @@ const SharingService = React.createClass( {
 	 */
 	getConnections: function() {
 		return this.filter( 'getConnections', this.props.service.ID, this.props.siteUserConnections, arguments );
-	},
-
-	/**
-	 * Given a service name, returns the connections for which the current user is permitted to remove.
-	 *
-	 * @param {string} service The name of the service
-	 * @return {Array} Connections for which the current user is permitted to remove
-	 */
-	getRemovableConnections: function( service ) {
-		const connections = this.getConnections().filter( ( connection ) => (
-			this.props.site.capabilities && this.props.site.capabilities.edit_others_posts ||
-				connection.user_ID === this.props.userId
-		), this );
-
-		return this.filter( 'getRemovableConnections', service, connections, arguments );
 	},
 
 	/**
@@ -300,13 +290,12 @@ const SharingService = React.createClass( {
 	},
 
 	performAction: function() {
-		const connectionStatus = this.getConnectionStatus( this.props.service.ID ),
-			removableConnections = this.getRemovableConnections( this.props.service.ID );
+		const connectionStatus = this.getConnectionStatus( this.props.service.ID );
 
 		// Depending on current status, perform an action when user clicks the
 		// service action button
-		if ( 'connected' === connectionStatus && removableConnections.length ) {
-			this.removeConnection( removableConnections );
+		if ( 'connected' === connectionStatus && this.props.removableConnections.length ) {
+			this.removeConnection();
 			this.props.recordGoogleEvent( 'Sharing', 'Clicked Disconnect Button', this.props.service.ID );
 		} else if ( 'reconnect' === connectionStatus ) {
 			this.refresh();
@@ -327,7 +316,7 @@ const SharingService = React.createClass( {
 	 * @param {Array} connections Optional. Connections to be deleted.
 	 *                            Default: All connections for this service.
 	 */
-	removeConnection: function( connections = this.getRemovableConnections( this.props.service.ID ) ) {
+	removeConnection: function( connections = this.props.removableConnections ) {
 		this.setState( { isDisconnecting: true } );
 
 		connections = this.filterConnectionsToRemove( connections );
@@ -411,8 +400,7 @@ const SharingService = React.createClass( {
 				onAction={ this.performAction }
 				isConnecting={ this.state.isConnecting }
 				isRefreshing={ this.state.isRefreshing }
-				isDisconnecting={ this.state.isDisconnecting }
-				removableConnections={ this.getRemovableConnections( this.props.service.ID ) } />
+				isDisconnecting={ this.state.isDisconnecting } />
 		);
 		return (
 			<div>
@@ -444,7 +432,7 @@ export default connect(
 			availableExternalAccounts: getAvailableExternalAccounts( state, service.ID ),
 			isFetching: isFetchingConnections( state, siteId ),
 			keyringConnections: getKeyringConnectionsByName( state, service.ID ),
-			site: getSelectedSite( state ),
+			removableConnections: getRemovableConnections( state, service.ID ),
 			siteId,
 			siteUserConnections: getSiteUserConnectionsForService( state, siteId, userId, service.ID ),
 			userId,
