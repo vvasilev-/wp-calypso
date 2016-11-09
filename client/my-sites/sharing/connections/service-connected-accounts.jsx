@@ -38,7 +38,7 @@ class SharingServiceConnectedAccounts extends Component {
 	};
 
 	connectAnother = () => {
-		this.props.onAddConnection();
+		this.props.onAddConnection( this.props.service );
 		this.props.recordGoogleEvent( 'Sharing', 'Clicked Connect Another Account Button', this.props.service.ID );
 	};
 
