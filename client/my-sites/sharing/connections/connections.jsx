@@ -28,15 +28,8 @@ class SharingConnections extends Component {
 			<div className="sharing-settings sharing-connections">
 				<QueryKeyringConnections />
 				<QueryKeyringServices />
-				<SharingServicesGroup
-					type="publicize"
-					title={ this.props.translate( 'Publicize Your Posts' ) }
-					connections={ this.props.connections } />
-				<SharingServicesGroup
-					type="other"
-					title={ this.props.translate( 'Other Connections' ) }
-					description={ this.props.translate( 'Connect any of these additional services to further enhance your site.' ) }
-					connections={ this.props.connections } />
+				<SharingServicesGroup type="publicize" title={ this.props.translate( 'Publicize Your Posts' ) } />
+				<SharingServicesGroup type="other" title={ this.props.translate( 'Other Connections' ) } />
 			</div>
 		);
 	}

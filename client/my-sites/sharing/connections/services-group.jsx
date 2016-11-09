@@ -2,7 +2,6 @@
  * External dependencies
  */
 import React, { Component, PropTypes } from 'react';
-import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { times } from 'lodash';
 
@@ -22,35 +21,25 @@ const NUMBER_OF_PLACEHOLDERS = 4;
 
 class SharingServicesGroup extends Component {
 	static propTypes = {
-		connections: PropTypes.object,
 		services: PropTypes.array,
 		title: PropTypes.string.isRequired,
 		type: PropTypes.string.isRequired,
 	};
 
 	static defaultProps = {
-		connections: Object.freeze( {} ),
 		services: Object.freeze( [] ),
 	};
 
 	render() {
-		const classes = classNames( 'sharing-services-group', {
-			'is-empty': ! this.props.services.length
-		} );
-
 		return (
-			<div className={ classes }>
+			<div className="sharing-services-group">
 				<SectionHeader label={ this.props.title } />
 				<ul className="sharing-services-group__services">
 					{ this.props.services.length
 						? this.props.services.map( ( service ) =>
-							<Service
-								key={ service.ID }
-								connections={ this.props.connections }
-								service={ service } /> )
+							<Service key={ service.ID } service={ service } /> )
 						: times( NUMBER_OF_PLACEHOLDERS, ( index ) =>
-							<ServicePlaceholder
-								key={ 'service-placeholder-' + index } /> )
+							<ServicePlaceholder key={ 'service-placeholder-' + index } /> )
 					}
 				</ul>
 			</div>
