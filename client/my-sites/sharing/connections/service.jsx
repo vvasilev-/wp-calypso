@@ -115,62 +115,6 @@ const SharingService = React.createClass( {
 		}
 	},
 
-	addConnection: function( service, keyringConnectionId, externalUserId = false ) {
-		this.setState( { isConnecting: true } );
-
-		if ( service ) {
-			if ( keyringConnectionId ) {
-				// Since we have a Keyring connection to work with, we can immediately
-				// create or update the connection
-				const existingConnection = find( this.props.siteUserConnections, { keyring_connection_ID: keyringConnectionId } );
-
-				if ( this.props.siteId && existingConnection ) {
-					// If a Keyring connection is already in use by another connection,
-					// we should trigger an update. There should only be one connection,
-					// so we're correct in using the connection ID from the first
-					this.props.updateSiteConnection( existingConnection, { external_user_ID: externalUserId } );
-				} else {
-					this.props.createSiteConnection( this.props.siteId, keyringConnectionId, externalUserId );
-				}
-
-				this.props.recordGoogleEvent( 'Sharing', 'Clicked Connect Button in Modal', this.props.service.ID );
-			} else {
-				// Attempt to create a new connection. If a Keyring connection ID
-				// is not provided, the user will need to authorize the app
-				const popupMonitor = new PopupMonitor();
-
-				popupMonitor.open( service.connect_URL, null, 'toolbar=0,location=0,status=0,menubar=0,' +
-					popupMonitor.getScreenCenterSpecs( 780, 500 ) );
-
-				popupMonitor.once( 'close', () => {
-					// When the user has finished authorizing the connection
-					// (or otherwise closed the window), force a refresh
-					this.props.requestKeyringConnections();
-
-					// In the case that a Keyring connection doesn't exist, wait for app
-					// authorization to occur, then display with the available connections
-					if ( this.didKeyringConnectionSucceed( service.ID, this.props.siteId ) && 'publicize' === service.type ) {
-						this.setState( { isSelectingAccount: true } );
-					}
-				} );
-			}
-		} else {
-			// If an account wasn't selected from the dialog or the user cancels
-			// the connection, the dialog should simply close
-			this.props.errorNotice( this.props.translate( 'The connection could not be made because no account was selected.', {
-				context: 'Sharing: Publicize connection confirmation'
-			} ) );
-			this.props.recordGoogleEvent( 'Sharing', 'Clicked Cancel Button in Modal', this.props.service.ID );
-		}
-
-		// Reset active account selection
-		this.setState( { isSelectingAccount: false } );
-	},
-
-	toggleSitewideConnection: function( connection, shared ) {
-		this.props.updateSiteConnection( connection, { shared } );
-	},
-
 	/**
 	 * Returns the available connections for the current user.
 	 *
@@ -178,6 +122,33 @@ const SharingService = React.createClass( {
 	 */
 	getConnections: function() {
 		return this.filter( 'getConnections', this.props.service.ID, this.props.siteUserConnections, arguments );
+	},
+
+	/**
+	 * Given a service name and optional site ID, returns the current status of the
+	 * service's connection.
+	 *
+	 * @param {string} service The name of the service to check
+	 * @return {string} Connection status.
+	 */
+	getConnectionStatus: function( service ) {
+		let status;
+
+		if ( this.props.isFetching ) {
+			// When connections are still loading, we don't know the status
+			status = 'unknown';
+		} else if ( ! some( this.getConnections(), { service } ) ) {
+			// If no connections exist, the service isn't connected
+			status = 'not-connected';
+		} else if ( some( this.getConnections(), { status: 'broken' } ) ) {
+			// A problematic connection exists
+			status = 'reconnect';
+		} else {
+			// If all else passes, assume service is connected
+			status = 'connected';
+		}
+
+		return this.filter( 'getConnectionStatus', service, status, arguments );
 	},
 
 	/**
@@ -274,6 +245,62 @@ const SharingService = React.createClass( {
 		}
 	},
 
+	addConnection: function( service, keyringConnectionId, externalUserId = false ) {
+		this.setState( { isConnecting: true } );
+
+		if ( service ) {
+			if ( keyringConnectionId ) {
+				// Since we have a Keyring connection to work with, we can immediately
+				// create or update the connection
+				const existingConnection = find( this.props.siteUserConnections, { keyring_connection_ID: keyringConnectionId } );
+
+				if ( this.props.siteId && existingConnection ) {
+					// If a Keyring connection is already in use by another connection,
+					// we should trigger an update. There should only be one connection,
+					// so we're correct in using the connection ID from the first
+					this.props.updateSiteConnection( existingConnection, { external_user_ID: externalUserId } );
+				} else {
+					this.props.createSiteConnection( this.props.siteId, keyringConnectionId, externalUserId );
+				}
+
+				this.props.recordGoogleEvent( 'Sharing', 'Clicked Connect Button in Modal', this.props.service.ID );
+			} else {
+				// Attempt to create a new connection. If a Keyring connection ID
+				// is not provided, the user will need to authorize the app
+				const popupMonitor = new PopupMonitor();
+
+				popupMonitor.open( service.connect_URL, null, 'toolbar=0,location=0,status=0,menubar=0,' +
+					popupMonitor.getScreenCenterSpecs( 780, 500 ) );
+
+				popupMonitor.once( 'close', () => {
+					// When the user has finished authorizing the connection
+					// (or otherwise closed the window), force a refresh
+					this.props.requestKeyringConnections();
+
+					// In the case that a Keyring connection doesn't exist, wait for app
+					// authorization to occur, then display with the available connections
+					if ( this.didKeyringConnectionSucceed( service.ID, this.props.siteId ) && 'publicize' === service.type ) {
+						this.setState( { isSelectingAccount: true } );
+					}
+				} );
+			}
+		} else {
+			// If an account wasn't selected from the dialog or the user cancels
+			// the connection, the dialog should simply close
+			this.props.errorNotice( this.props.translate( 'The connection could not be made because no account was selected.', {
+				context: 'Sharing: Publicize connection confirmation'
+			} ) );
+			this.props.recordGoogleEvent( 'Sharing', 'Clicked Cancel Button in Modal', this.props.service.ID );
+		}
+
+		// Reset active account selection
+		this.setState( { isSelectingAccount: false } );
+	},
+
+	toggleSitewideConnection: function( connection, shared ) {
+		this.props.updateSiteConnection( connection, { shared } );
+	},
+
 	refresh: function( connections = this.props.brokenConnections ) {
 		this.setState( { isRefreshing: true } );
 
@@ -313,33 +340,6 @@ const SharingService = React.createClass( {
 
 		connections = this.filterConnectionsToRemove( connections );
 		connections.map( this.props.deleteSiteConnection );
-	},
-
-	/**
-	 * Given a service name and optional site ID, returns the current status of the
-	 * service's connection.
-	 *
-	 * @param {string} service The name of the service to check
-	 * @return {string} Connection status.
-	 */
-	getConnectionStatus: function( service ) {
-		let status;
-
-		if ( this.props.isFetching ) {
-			// When connections are still loading, we don't know the status
-			status = 'unknown';
-		} else if ( ! some( this.getConnections(), { service } ) ) {
-			// If no connections exist, the service isn't connected
-			status = 'not-connected';
-		} else if ( some( this.getConnections(), { status: 'broken' } ) ) {
-			// A problematic connection exists
-			status = 'reconnect';
-		} else {
-			// If all else passes, assume service is connected
-			status = 'connected';
-		}
-
-		return this.filter( 'getConnectionStatus', service, status, arguments );
 	},
 
 	render: function() {
