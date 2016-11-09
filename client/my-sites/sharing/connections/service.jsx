@@ -163,8 +163,8 @@ const SharingService = React.createClass( {
 		this.setState( { isSelectingAccount: false } );
 	},
 
-	toggleSitewideConnection: function( connection, isSitewide ) {
-		this.props.connections.update( connection, { shared: isSitewide } );
+	toggleSitewideConnection: function( connection, shared ) {
+		this.props.updateSiteConnection( connection, { shared } );
 	},
 
 	/**
