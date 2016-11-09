@@ -42,21 +42,6 @@ class SharingServiceConnectedAccounts extends Component {
 		this.props.recordGoogleEvent( 'Sharing', 'Clicked Connect Another Account Button', this.props.service.ID );
 	};
 
-	getConnectionElements() {
-		return this.props.connections.map( ( connection ) =>
-			<Connection
-				key={ connection.keyring_connection_ID }
-				connection={ connection }
-				isDisconnecting={ this.props.isDisconnecting }
-				isRefreshing={ this.props.isRefreshing }
-				onDisconnect={ this.props.onRemoveConnection }
-				onRefresh={ this.props.onRefreshConnection }
-				onToggleSitewideConnection={ this.props.onToggleSitewideConnection }
-				service={ this.props.service }
-				showDisconnect={ this.props.connections.length > 1 || 'broken' === connection.status } />
-		);
-	}
-
 	getConnectAnotherElement() {
 		if ( 'publicize' === this.props.service.type ) {
 			return (
@@ -71,7 +56,18 @@ class SharingServiceConnectedAccounts extends Component {
 		return (
 			<div className="sharing-service-accounts-detail">
 				<ul className="sharing-service-connected-accounts">
-					{ this.getConnectionElements() }
+					{ this.props.connections.map( ( connection ) =>
+						<Connection
+							key={ connection.keyring_connection_ID }
+							connection={ connection }
+							isDisconnecting={ this.props.isDisconnecting }
+							isRefreshing={ this.props.isRefreshing }
+							onDisconnect={ this.props.onRemoveConnection }
+							onRefresh={ this.props.onRefreshConnection }
+							onToggleSitewideConnection={ this.props.onToggleSitewideConnection }
+							service={ this.props.service }
+							showDisconnect={ this.props.connections.length > 1 || 'broken' === connection.status } />
+					) }
 				</ul>
 				{ this.getConnectAnotherElement() }
 			</div>
