@@ -192,7 +192,7 @@ class SharingService extends Component {
 				popupMonitor.once( 'close', () => {
 					// When the user has finished authorizing the connection
 					// (or otherwise closed the window), force a refresh
-					this.props.refreshSiteConnection( this.props.siteId, connection );
+					this.props.fetchConnection( this.props.siteId, connection.ID );
 				} );
 			} else {
 				this.props.errorNotice( this.props.translate( 'The %(service)s account was unable to be reconnected.', {
