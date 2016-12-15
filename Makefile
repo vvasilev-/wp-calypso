@@ -206,9 +206,12 @@ shrinkwrap: node-version
 	@$(NPM) install --no-optional # remove this when this is fixed in npm 3
 	@shonkwrap --dev
 
+urn:
+	@printf "⚱\n--did you mean make run?\n";
+
 # rule that can be used as a prerequisite for other rules to force them to always run
 FORCE:
 
 .PHONY: build build-development build-server build-dll build-desktop build-desktop-mac-app-store build-horizon build-stage build-production build-wpcalypso
 .PHONY: run install test clean distclean translate route node-version
-.PHONY: githooks githooks-commit githooks-push
+.PHONY: githooks githooks-commit githooks-push urn
