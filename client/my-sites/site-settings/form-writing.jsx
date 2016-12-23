@@ -209,7 +209,7 @@ const SiteSettingsFormWriting = React.createClass( {
 					this.props.isJetpackSite && (
 						<ThemeEnhancements
 							submittingForm={ this.state.submittingForm }
-							onSubmitForm={ this.submitFormAndActivateCustomContentModule }
+							onSubmitForm={ this.handleSubmitForm }
 							fetchingSettings={ this.state.fetchingSettings }
 							/>
 					)
