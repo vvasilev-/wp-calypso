@@ -1,7 +1,15 @@
 /**
  * Internal dependencies
  */
-import handlers from './wpcom';
+import { mergeHandlers } from './utils';
+
+import httpHandlers from './wpcom-http';
+import wpcomHandlers from './wpcom';
+
+const handlerTree = mergeHandlers(
+	httpHandlers,
+	wpcomHandlers,
+);
 
 /**
  * WPCOM Middleware API
@@ -10,12 +18,12 @@ import handlers from './wpcom';
  * WordPress.com API and passes them off to the
  * appropriate handler.
  */
-export const middleware = store => next => action =>
+export const middleware = handlers => store => next => action =>
 	// we won't use has( handlers, action.type )
 	// here because of performance implications
 	// this function is run on every dispatch
 	!! handlers[ action.type ]
-		? handlers[ action.type ].forEach( handler => handler( store, action ) )
+		? handlers[ action.type ].forEach( handler => handler( store, action, next ) )
 		: next( action );
 
-export default middleware;
+export default middleware( handlerTree );
