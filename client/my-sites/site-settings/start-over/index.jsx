@@ -37,17 +37,23 @@ const StartOver = ( { translate, selectedSiteSlug } ) => {
 						<img src="/calypso/images/wordpress/logo-stars.svg" width="170" height="143" />
 					</ActionPanelFigure>
 					<ActionPanelTitle>{ strings.startOver }</ActionPanelTitle>
-					<p>{
-						translate( 'If you want a site but don\'t want any of the posts and pages you have now, our support ' +
-							'team can delete your posts, pages, media, and comments for you.' )
-					}</p>
-					<p>{
-						translate( 'This will keep your site and URL active, but give you a fresh start on your content ' +
-							'creation. Just contact us to have your current content cleared out.' )
-					}</p>
-					<p>{
-						translate( 'Alternatively, you can delete all content from your site by following the steps here.' )
-					}</p>
+					<p>
+						{ translate(
+							'If you want a site but don\'t want any of the posts and pages you have now, our support ' +
+							'team can delete your posts, pages, media, and comments for you.'
+						) }
+					</p>
+					<p>
+						{ translate(
+							'This will keep your site and URL active, but give you a fresh start on your content ' +
+							'creation. Just contact us to have your current content cleared out.'
+						) }
+					</p>
+					<p>
+						{ translate(
+							'Alternatively, you can delete all content from your site by following the steps here.'
+						) }
+					</p>
 				</ActionPanelBody>
 				<ActionPanelFooter>
 					<Button
