@@ -6,7 +6,7 @@ import { mergeHandlers } from './utils';
 import httpHandlers from './wpcom-http';
 import wpcomHandlers from './wpcom';
 
-const handlerTree = mergeHandlers(
+const mergedHandlers = mergeHandlers(
 	httpHandlers,
 	wpcomHandlers,
 );
@@ -26,4 +26,4 @@ export const middleware = handlers => store => next => action =>
 		? handlers[ action.type ].forEach( handler => handler( store, action, next ) )
 		: next( action );
 
-export default middleware( handlerTree );
+export default middleware( mergedHandlers );
