@@ -16,6 +16,7 @@ import { getSelectedSiteId } from 'state/ui/selectors';
 import { isJetpackSite } from 'state/sites/selectors';
 import { isThemeActive } from 'state/themes/selectors';
 import { canCurrentUser } from 'state/selectors';
+import config from 'config';
 
 const SingleSiteThemeShowcaseWithOptions = ( props ) => {
 	const { isJetpack, translate } = props;
@@ -40,6 +41,7 @@ const SingleSiteThemeShowcaseWithOptions = ( props ) => {
 					'purchase',
 					'activate',
 					'tryandcustomize',
+					config.isEnabled( 'manage/themes/upload' ) && 'deleteTheme',
 					'separator',
 					'info',
 					'support',
