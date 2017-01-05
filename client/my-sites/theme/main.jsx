@@ -53,6 +53,7 @@ import { getTheme } from 'state/themes/selectors';
 import { isValidTerm } from 'my-sites/themes/theme-filters';
 import { hasFeature } from 'state/sites/plans/selectors';
 import { FEATURE_UNLIMITED_PREMIUM_THEMES } from 'lib/plans/constants';
+import { recordTracksEvent } from 'state/analytics/actions';
 
 const ThemeSheet = React.createClass( {
 	displayName: 'ThemeSheet',
@@ -273,7 +274,7 @@ const ThemeSheet = React.createClass( {
 					{ i18n.translate( 'Need extra help?' ) }
 					<small>{ i18n.translate( 'Get in touch with our support team' ) }</small>
 				</div>
-				<Button primary={ isPrimary } href={ '/help/contact/' }>Contact us</Button>
+				<Button primary={ isPrimary } href={ '/help/contact/' } onClick={ this.props.recordHelpButtonClick }>Contact us</Button>
 			</Card>
 		);
 	},
@@ -307,7 +308,11 @@ const ThemeSheet = React.createClass( {
 					{ i18n.translate( 'Need CSS help? ' ) }
 					<small>{ i18n.translate( 'Get help from the experts in our CSS forum' ) }</small>
 				</div>
-				<Button href="//en.forums.wordpress.com/forum/css-customization">Visit forum</Button>
+				<Button
+					href="//en.forums.wordpress.com/forum/css-customization"
+					onClick={ this.props.recordCSSButtonClick }>
+					Visit forum
+				</Button>
 			</Card>
 		);
 	},
@@ -577,6 +582,11 @@ const ThemeSheetWithOptions = ( props ) => {
 	);
 };
 
+const mapDispatchToProps = ( dispatch, ownProps ) => ( {
+	recordHelpButtonClick: () => dispatch( recordTracksEvent( 'calypso_theme_help_button_click', { theme_name: ownProps.id } ) ),
+	recordCSSButtonClick: () => dispatch( recordTracksEvent( 'calypso_theme_css_button_click', { theme_name: ownProps.id } ) )
+} );
+
 export default connect(
 	/*
 	 * A number of the props that this mapStateToProps function computes are used
@@ -632,5 +642,6 @@ export default connect(
 			),
 			forumUrl: selectedSite && getThemeForumUrl( state, id, selectedSite.ID )
 		};
-	}
+	},
+	mapDispatchToProps
 )( ThemeSheetWithOptions );
