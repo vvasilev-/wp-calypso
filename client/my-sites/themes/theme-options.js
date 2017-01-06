@@ -25,12 +25,14 @@ import {
 	getThemeHelpUrl as getHelpUrl,
 	isThemeActive as isActive,
 	isThemePurchased as isPurchased,
-	isThemePremium as isPremium
+	isThemePremium as isPremium,
+	getTheme,
 } from 'state/themes/selectors';
-import { isJetpackSite } from 'state/sites/selectors';
+import { isJetpackSite, getSiteSlug } from 'state/sites/selectors';
 import { hasFeature } from 'state/sites/plans/selectors';
 import { canCurrentUser } from 'state/selectors';
 import { FEATURE_UNLIMITED_PREMIUM_THEMES } from 'lib/plans/constants';
+import accept from 'lib/accept';
 
 const purchase = config.isEnabled( 'upgrades/checkout' )
 	? {
@@ -75,9 +77,25 @@ const activateOnJetpack = {
 	)
 };
 
+const deleteConfirmation = ( themeId, siteId ) => {
+	return ( dispatch, getState ) => {
+		const { name: themeName } = getTheme( getState(), siteId, themeId );
+		const siteSlug = getSiteSlug( getState(), siteId );
+		accept(
+			i18n.translate(
+				'Are you sure you want to delete %(themeName)s from %(siteSlug)s?',
+				{ args: { themeName, siteSlug }, context: 'Themes: theme delete confirmation dialog' }
+			),
+			( accepted ) => {
+				accepted && dispatch( deleteThemeAction( themeId, siteId ) );
+			}
+		);
+	};
+};
+
 const deleteTheme = {
 	label: i18n.translate( 'Delete' ),
-	action: deleteThemeAction,
+	action: deleteConfirmation,
 	hideForSite: ( state, siteId ) => ! isJetpackSite( state, siteId ) || ! config.isEnabled( 'manage/themes/upload' ),
 	hideForTheme: ( state, theme, siteId ) => isActive( state, theme.id, siteId ),
 };
