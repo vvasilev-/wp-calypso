@@ -650,11 +650,12 @@ export function deleteTheme( themeId, siteId ) {
 			siteId,
 		} );
 		return wpcom.undocumented().deleteThemeFromJetpack( siteId, themeId )
-			.then( () => {
+			.then( ( theme ) => {
 				dispatch( {
 					type: THEME_DELETE_SUCCESS,
 					themeId,
 					siteId,
+					themeName: theme.name,
 				} );
 			} )
 			.catch( error => {

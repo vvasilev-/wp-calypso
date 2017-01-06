@@ -152,6 +152,20 @@ export const onPublicizeConnectionUpdateFailure = ( dispatch, { error } ) => dis
 	} ) )
 );
 
+const onThemeDeleteSuccess = ( dispatch, { themeName } ) => dispatch(
+	successNotice( translate( 'Deleted theme %(themeName)s.', {
+		args: { themeName },
+		context: 'Themes: Theme delete confirmation',
+	} ), { duration: 5000 } )
+);
+
+const onThemeDeleteFailure = ( dispatch, { themeId } ) => dispatch(
+	errorNotice( translate( 'Problem deleting %(themeId)s. Check theme is not active.', {
+		args: { themeId },
+		context: 'Themes: Theme delete failure',
+	} ) )
+);
+
 /**
  * Handler action type mapping
  */
@@ -184,8 +198,8 @@ export const handlers = {
 	[ PUBLICIZE_CONNECTION_UPDATE_FAILURE ]: onPublicizeConnectionUpdateFailure,
 	[ GUIDED_TRANSFER_HOST_DETAILS_SAVE_SUCCESS ]: dispatchSuccess( translate( 'Thanks for confirming those details!' ) ),
 	[ SITE_FRONT_PAGE_SET_FAILURE ]: dispatchError( translate( 'An error occurred while setting the homepage' ) ),
-	[ THEME_DELETE_FAILURE ]: dispatchError( translate( 'Problem deleting. Check theme is not active.' ) ),
-	[ THEME_DELETE_SUCCESS ]: dispatchSuccess( translate( 'Theme deleted' ), { duration: 5000 } ),
+	[ THEME_DELETE_FAILURE ]: onThemeDeleteFailure,
+	[ THEME_DELETE_SUCCESS ]: onThemeDeleteSuccess,
 	[ THEME_TRY_AND_CUSTOMIZE_FAILURE ]: dispatchError( translate( 'Customize error, please retry or contact support' ) ),
 };
 
