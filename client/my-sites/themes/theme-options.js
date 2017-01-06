@@ -78,7 +78,7 @@ const activateOnJetpack = {
 const deleteTheme = {
 	label: i18n.translate( 'Delete' ),
 	action: deleteThemeAction,
-	hideForSite: ( state, siteId ) => ! isJetpackSite( state, siteId ),
+	hideForSite: ( state, siteId ) => ! isJetpackSite( state, siteId ) || ! config.isEnabled( 'manage/themes/upload' ),
 	hideForTheme: ( state, theme, siteId ) => isActive( state, theme.id, siteId ),
 };
 
