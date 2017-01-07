@@ -13,6 +13,7 @@ import { uniq } from 'lodash';
 import userFactory from 'lib/user';
 import sitesFactory from 'lib/sites-list';
 import { receiveSite } from 'state/sites/actions';
+import { getSite } from 'state/sites/selectors';
 import {
 	setSelectedSiteId,
 	setSection,
@@ -169,7 +170,15 @@ module.exports = {
 		const onSelectedSiteAvailable = () => {
 			const selectedSite = sites.getSelectedSite();
 			siteStatsStickyTabActions.saveFilterAndSlug( false, selectedSite.slug );
-			context.store.dispatch( receiveSite( selectedSite ) );
+
+			// Sites are currently only made available in Redux state by the
+			// receive here, thus only including selected sites. However, if
+			// it's already known in state, don't receive to avoid potentially
+			// overriding changes made more recently to state site object.
+			if ( ! getSite( context.store.getState(), selectedSite.ID ) ) {
+				context.store.dispatch( receiveSite( selectedSite ) );
+			}
+
 			context.store.dispatch( setSelectedSiteId( selectedSite.ID ) );
 
 			// Update recent sites preference
