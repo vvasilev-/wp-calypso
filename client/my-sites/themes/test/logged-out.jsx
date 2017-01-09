@@ -24,6 +24,7 @@ import { DEFAULT_THEME_QUERY } from 'state/themes/constants';
 describe( 'logged-out', () => {
 	context( 'when calling renderToString()', function() {
 		useMockery( mockery => {
+			mockery.registerMock( 'lib/accept', noop );
 			mockery.registerMock( 'lib/analytics', noop );
 			mockery.registerMock( './theme-preview', EmptyComponent );
 			mockery.registerMock( 'components/popover', EmptyComponent );
