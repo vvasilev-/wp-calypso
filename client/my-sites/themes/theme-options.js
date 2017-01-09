@@ -88,7 +88,12 @@ const deleteConfirmation = ( themeId, siteId ) => {
 			),
 			( accepted ) => {
 				accepted && dispatch( deleteThemeAction( themeId, siteId ) );
-			}
+			},
+			i18n.translate(
+				'Delete %(themeName)s',
+				{ args: { themeName }, context: 'Themes: theme delete dialog confirm button' }
+			),
+			i18n.translate( 'Back', { context: 'Theme: theme delete dialog back button' } )
 		);
 	};
 };
