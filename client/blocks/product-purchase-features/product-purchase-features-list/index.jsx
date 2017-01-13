@@ -26,7 +26,7 @@ import GoogleVouchers from './google-vouchers';
 import CustomizeTheme from './customize-theme';
 import VideoAudioPosts from './video-audio-posts';
 import MonetizeSite from './monetize-site';
-import LiveCourses from './live-courses';
+import BusinessOnboarding from './business-onboarding';
 import CustomDomain from './custom-domain';
 import GoogleAnalyticsStats from './google-analytics-stats';
 import JetpackAntiSpam from './jetpack-anti-spam';
@@ -88,8 +88,8 @@ class ProductPurchaseFeaturesList extends Component {
 				selectedSite={ selectedSite }
 				key="customizeThemeFeature"
 			/>,
-			<LiveCourses
-				key="attendLiveCourses"
+			<BusinessOnboarding
+				key="businessOnboarding"
 			/>,
 			<VideoAudioPosts
 				selectedSite={ selectedSite }
