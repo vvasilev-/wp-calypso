@@ -274,7 +274,12 @@ const ThemeSheet = React.createClass( {
 					{ i18n.translate( 'Need extra help?' ) }
 					<small>{ i18n.translate( 'Get in touch with our support team' ) }</small>
 				</div>
-				<Button primary={ isPrimary } href={ '/help/contact/' } onClick={ this.props.recordHelpButtonClick }>Contact us</Button>
+				<Button
+					primary={ isPrimary }
+					href={ '/help/contact/' }
+					onClick={ this.props.recordThemeSheetButtonClick.bind( null, 'help' ) }>
+					Contact us
+				</Button>
 			</Card>
 		);
 	},
@@ -310,7 +315,7 @@ const ThemeSheet = React.createClass( {
 				</div>
 				<Button
 					href="//en.forums.wordpress.com/forum/css-customization"
-					onClick={ this.props.recordCSSButtonClick }>
+					onClick={ this.props.recordThemeSheetButtonClick.bind( null, 'css' ) }>
 					Visit forum
 				</Button>
 			</Card>
@@ -583,8 +588,10 @@ const ThemeSheetWithOptions = ( props ) => {
 };
 
 const mapDispatchToProps = ( dispatch, ownProps ) => ( {
-	recordHelpButtonClick: () => dispatch( recordTracksEvent( 'calypso_theme_help_button_click', { theme_name: ownProps.id } ) ),
-	recordCSSButtonClick: () => dispatch( recordTracksEvent( 'calypso_theme_css_button_click', { theme_name: ownProps.id } ) )
+	recordThemeSheetButtonClick: ( context ) => dispatch( recordTracksEvent( 'calypso_theme_sheet_button_click', {
+		theme_name: ownProps.id,
+		button_context: context
+	} ) )
 } );
 
 export default connect(
