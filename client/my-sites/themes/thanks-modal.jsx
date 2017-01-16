@@ -19,6 +19,7 @@ import {
 	getThemeDetailsUrl,
 	getThemeCustomizeUrl,
 	getThemeForumUrl,
+	getThemeSetupUrl,
 	isActivatingTheme,
 	hasActivatedTheme
 } from 'state/themes/selectors';
@@ -63,6 +64,12 @@ const ThanksModal = React.createClass( {
 	},
 
 	renderWpcomInfo() {
+		const themeSetup = translate( 'Make your site look like the demo with {{a}}Theme Setup{{/a}}.', {
+			components: {
+				a: <a href={ this.props.themeSetupUrl }
+					onClick={ this.onLinkClick( 'setup' ) } />
+			}
+		} );
 		const features = translate( "Discover this theme's {{a}}awesome features.{{/a}}", {
 			components: {
 				a: <a href={ this.props.detailsUrl }
@@ -77,6 +84,9 @@ const ThanksModal = React.createClass( {
 		} );
 		return (
 			<ul>
+				<li>
+					{ themeSetup }
+				</li>
 				<li>
 					{ this.props.source === 'list' ? features : customize }
 				</li>
@@ -208,6 +218,7 @@ export default connect(
 
 		return {
 			currentTheme,
+			themeSetupUrl: site && getThemeSetupUrl( state, site.ID ),
 			detailsUrl: site && getThemeDetailsUrl( state, currentTheme, site.ID ),
 			customizeUrl: site && getThemeCustomizeUrl( state, currentTheme, site.ID ),
 			forumUrl: getThemeForumUrl( state, currentThemeId ),
