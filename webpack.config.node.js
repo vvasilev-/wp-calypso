@@ -13,6 +13,8 @@ var webpack = require( 'webpack' ),
  */
 var config = require( 'config' );
 
+const bundleEnv = config( 'env' );
+
 /**
  * This lists modules that must use commonJS `require()`s
  * All modules listed here need to be ES5.
@@ -68,10 +70,12 @@ var webpackConfig = {
 				exclude: /(node_modules|devdocs\/search-index)/,
 				loader: 'babel',
 				query: {
-					plugins: [ [
-						path.join( __dirname, 'server', 'bundler', 'babel', 'babel-plugin-transform-wpcalypso-async' ),
-						{ async: false }
-					] ]
+					plugins: [
+						[
+							path.join( __dirname, 'server', 'bundler', 'babel', 'babel-plugin-transform-wpcalypso-async' ),
+							{ async: false }
+						]
+					]
 				}
 			},
 			{
@@ -93,6 +97,11 @@ var webpackConfig = {
 		__dirname: true
 	},
 	plugins: [
+		new webpack.DefinePlugin( {
+			'process.env': {
+				NODE_ENV: JSON.stringify( bundleEnv )
+			}
+		} ),
 		// Require source-map-support at the top, so we get source maps for the bundle
 		new webpack.BannerPlugin( 'require( "source-map-support" ).install();', { raw: true, entryOnly: false } ),
 		new webpack.NormalModuleReplacementPlugin( /^lib\/analytics$/, 'lodash/noop' ), // Depends on BOM
