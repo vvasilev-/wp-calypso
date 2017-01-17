@@ -126,4 +126,14 @@ if ( config.isEnabled( 'webpack/persistent-caching' ) ) {
 	webpackConfig.plugins.unshift( new HardSourceWebpackPlugin( { cacheDirectory: path.join( __dirname, '.webpack-cache', 'server' ) } ) );
 }
 
+if ( bundleEnv === 'production' ) {
+	webpackConfig.plugins.push(
+		new webpack.optimize.UglifyJsPlugin( {
+			compress: {
+				warnings: false
+			}
+		} )
+	);
+}
+
 module.exports = webpackConfig;
