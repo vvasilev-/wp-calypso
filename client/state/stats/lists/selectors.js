@@ -13,6 +13,7 @@ import {
 	normalizers,
 	buildExportArray,
 } from './utils';
+import { getSite } from 'state/sites/selectors';
 
 /**
  * Returns true if currently requesting stats for the statType and query combo, or false
@@ -159,7 +160,8 @@ export const getSiteStatsNormalizedData = createSelector(
 		const data = getSiteStatsForQuery( state, siteId, statType, query );
 
 		if ( 'function' === typeof normalizers[ statType ] ) {
-			return normalizers[ statType ].call( this, data, query );
+			const site = getSite( state, siteId );
+			return normalizers[ statType ].call( this, data, query, siteId, site );
 		}
 
 		return data;
