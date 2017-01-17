@@ -1,0 +1,26 @@
+/**
+ * External dependencies
+ */
+import { get } from 'lodash';
+
+/**
+ * Internal dependencies
+ */
+import createSelector from 'lib/create-selector';
+import { getBillingTransactions } from './';
+
+/**
+ * Returns all upcoming billing transactions.
+ * Returns null if the billing transactions have not been fetched yet.
+ *
+ * @param  {Object}  state   Global state tree
+ * @return {?Array}          An array of upcoming transactions
+ */
+const getUpcomingBillingTransactions = createSelector(
+	( state ) => {
+		return get( getBillingTransactions( state ), [ 'upcoming' ], null );
+	},
+	getBillingTransactions
+);
+
+export default getUpcomingBillingTransactions;
